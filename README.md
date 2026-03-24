@@ -4,4 +4,4 @@
 
 ## Model Agnostic Approach
 
-![Model Agnostic Approach](images/model_agnostic.png)
+![Model Agnostic Approach](images/image.png)
