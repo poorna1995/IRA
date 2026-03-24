@@ -58,6 +58,7 @@ class SWEBenchLoader(BaseLoader):
             "base_commit",
             "version",
             "hints_text",
+            "difficulty",
             "created_at",
             "FAIL_TO_PASS",
             "PASS_TO_PASS",
