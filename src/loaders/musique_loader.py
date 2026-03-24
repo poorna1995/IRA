@@ -136,11 +136,11 @@ class MuSiQueLoader(BaseLoader):
                 "inferred num_hops from ID strings"
             )
 
-        # ── Map hops → normalized complexity ground truth ─────────
-        df["complexity_gt"] = df["num_hops"].map(self.HOP_COMPLEXITY_MAP)
-        # Fill any unmapped hop counts with max complexity
-        df["complexity_gt"] = df["complexity_gt"].fillna(0.90)
-        logger.info("  Added 'complexity_gt' from hop count (ground truth)")
+        # # ── Map hops → normalized complexity ground truth ─────────
+        # df["complexity_gt"] = df["num_hops"].map(self.HOP_COMPLEXITY_MAP)
+        # # Fill any unmapped hop counts with max complexity
+        # df["complexity_gt"] = df["complexity_gt"].fillna(0.90)
+        # logger.info("  Added 'complexity_gt' from hop count (ground truth)")
 
         # ── Keep only needed columns ──────────────────────────────
         keep = [
@@ -148,7 +148,7 @@ class MuSiQueLoader(BaseLoader):
             "query",
             "answer",
             "num_hops",
-            "complexity_gt",
+            # "complexity_gt",
             "decomposition",
             "paragraphs",
         ]

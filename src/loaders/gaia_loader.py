@@ -83,10 +83,10 @@ class GAIALoader(BaseLoader):
 
         # ── Normalize level to complexity_gt (0.0 – 1.0) ─────────
         # Level 1 → 0.2, Level 2 → 0.5, Level 3 → 0.9
-        level_map = {1: 0.2, 2: 0.5, 3: 0.9}
-        if "level" in df.columns:
-            df["complexity_gt"] = df["level"].map(level_map)
-            logger.info("  Added 'complexity_gt' from GAIA levels (ground truth)")
+        # level_map = {1: 0.2, 2: 0.5, 3: 0.9}
+        # if "level" in df.columns:
+        #     df["complexity_gt"] = df["level"].map(level_map)
+        #     logger.info("  Added 'complexity_gt' from GAIA levels (ground truth)")
 
         # ── Keep only needed columns ──────────────────────────────
         keep = [
@@ -94,7 +94,7 @@ class GAIALoader(BaseLoader):
             "query",
             "answer",
             "level",
-            "complexity_gt",
+            # "complexity_gt",
             "annotator_steps",
             "annotator_tools",
             "file_name",

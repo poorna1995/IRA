@@ -15,6 +15,7 @@ datasets/cache/*
 !datasets/processed/README.md
 !datasets/cache/README.md
 !datasets/download_datasets.py
+notebooks/data/*
 
 # Outputs (commit selectively)
 logs/

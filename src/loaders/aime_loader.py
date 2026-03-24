@@ -100,22 +100,24 @@ class AIMELoader(BaseLoader):
             df = df[df["year"] >= year_gte].copy()
             logger.info(f"  Year filter (>= {year_gte}): {before} → {len(df)} rows")
 
-        # ── Complexity proxy ──────────────────────────────────────
-        # AIME II is systematically harder than AIME I.
-        # All AIME problems are intrinsically hard, but we can
-        # create a within-AIME difficulty scale.
-        if "part" in df.columns:
-            df["difficulty_proxy"] = df["part"].apply(
-                lambda p: 0.85 if "II" in str(p) else 0.75
-            )
-        else:
-            df["difficulty_proxy"] = 0.80  # default high difficulty
+        # # ── Complexity proxy ──────────────────────────────────────
+        # # AIME II is systematically harder than AIME I.
+        # # All AIME problems are intrinsically hard, but we can
+        # # create a within-AIME difficulty scale.
+        # if "part" in df.columns:
+        #     df["difficulty_proxy"] = df["part"].apply(
+        #         lambda p: 0.85 if "II" in str(p) else 0.75
+        #     )
+        # else:
+        #     df["difficulty_proxy"] = 0.80  # default high difficulty
 
-        df["complexity_gt"] = df["difficulty_proxy"]
+        # df["complexity_gt"] = df["difficulty_proxy"]
 
         # ── Keep needed columns ───────────────────────────────────
         keep = ["id", "query", "answer", "year", "part",
-                "complexity_gt", "solution"]
+                # "complexity_gt",
+                
+                 "solution"]
         keep = [c for c in keep if c in df.columns]
         df = df[keep].copy()
 

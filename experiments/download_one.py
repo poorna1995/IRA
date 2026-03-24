@@ -89,16 +89,16 @@ def inspect(df, name: str):
     print(f"  max    : {ql.max():>8,}")
 
     # ── Complexity ground truth (if available) ────────────────
-    if "complexity_gt" in df.columns:
-        print("\n── Complexity GT distribution ───────────────────────")
-        gt = df["complexity_gt"].dropna()
-        print(f"  range  : {gt.min():.2f} → {gt.max():.2f}")
-        print(f"  mean   : {gt.mean():.3f}")
-        # Value counts
-        vc = gt.value_counts().sort_index()
-        for val, cnt in vc.items():
-            bar = "█" * int(cnt / vc.max() * 20)
-            print(f"  {val:.2f}  {bar}  {cnt}")
+    # if "complexity_gt" in df.columns:
+    #     print("\n── Complexity GT distribution ───────────────────────")
+    #     gt = df["complexity_gt"].dropna()
+    #     print(f"  range  : {gt.min():.2f} → {gt.max():.2f}")
+    #     print(f"  mean   : {gt.mean():.3f}")
+    #     # Value counts
+    #     vc = gt.value_counts().sort_index()
+    #     for val, cnt in vc.items():
+    #         bar = "█" * int(cnt / vc.max() * 20)
+    #         print(f"  {val:.2f}  {bar}  {cnt}")
 
     if "level" in df.columns:
         print("\n── GAIA Level distribution ──────────────────────────")
@@ -140,8 +140,8 @@ def inspect(df, name: str):
         )
         answer_preview = str(row["answer"])[:80].replace("\n", " ")
         print(f"  Answer : {answer_preview}")
-        if "complexity_gt" in row:
-            print(f"  GT     : {row['complexity_gt']}")
+        # if "complexity_gt" in row:
+        #     print(f"  GT     : {row['complexity_gt']}")
 
     print(f"\n{sep}")
     print(f"  Saved → datasets/processed/{name}.parquet")
