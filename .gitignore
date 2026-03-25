@@ -19,7 +19,10 @@ datasets/cache/*
 !experiments/download_one.py
 experiments/debugs/*
 notebooks/data/*
-!notebooks/task_complexity_estimator.ipynb
+
+
+data/*
+
 
 # Outputs (commit selectively)
 logs/

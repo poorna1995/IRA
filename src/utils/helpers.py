@@ -9,11 +9,181 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-from typing import Any
-
+from typing import Any, Optional
 import numpy as np
 import pandas as pd
 import yaml
+import math
+import logging
+from functools import lru_cache
+import spacy
+
+from ..config import BAND_THRESHOLDS
+
+logger = logging.getLogger(__name__)
+
+
+
+"""
+utils.py
+========
+Shared helpers used across all feature layers.
+
+- clip_to_range   : clamp float to [lo, hi]
+- min_max_scale   : linear normalisation to [0, 1]
+- log_scale       : log-compressed normalisation (good for skewed counts)
+- tree_depth      : recursive dependency-tree depth
+- get_doc         : spaCy parse, cached with a module-level singleton
+- assign_band     : map composite score C → human-readable tier
+"""
+
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# spaCy singleton
+# ─────────────────────────────────────────────────────────────────────────────
+
+_NLP: Optional[spacy.language.Language] = None
+
+
+def get_nlp() -> spacy.language.Language:
+    """
+    Lazily load and return the shared spaCy model (en_core_web_md).
+
+    The model is initialised once per process.  All feature layers call
+    ``get_doc()`` which delegates here, so there is no risk of loading
+    the model multiple times.
+    """
+    global _NLP
+    if _NLP is None:
+        try:
+            _NLP = spacy.load("en_core_web_md")
+            logger.info("spaCy model 'en_core_web_md' loaded.")
+        except OSError:
+            logger.warning(
+                "en_core_web_md not found — falling back to en_core_web_sm. "
+                "Run: python -m spacy download en_core_web_md"
+            )
+            _NLP = spacy.load("en_core_web_sm")
+    return _NLP
+
+
+def get_doc(text: str) -> spacy.tokens.Doc:
+    """
+    Parse *text* with the shared spaCy model and return a ``Doc``.
+
+    The ``Doc`` contains tokens, POS tags, dependency arcs, and named
+    entity spans — everything the L1 and L2 feature layers need.
+    """
+    return get_nlp()(text)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Numeric helpers
+# ─────────────────────────────────────────────────────────────────────────────
+
+def clip_to_range(value: float, lo: float = 0.0, hi: float = 1.0) -> float:
+    """
+    Clamp *value* so it never falls outside [*lo*, *hi*].
+
+    Needed because floating-point addition of weighted sub-scores can produce
+    tiny over/underflows such as -0.0001 or 1.00003.
+
+    Examples
+    --------
+    >>> clip_to_range(1.05)   # → 1.0
+    >>> clip_to_range(-0.02)  # → 0.0
+    >>> clip_to_range(0.73)   # → 0.73
+    """
+    return max(lo, min(hi, value))
+
+
+def min_max_scale(value: float, lo: float, hi: float) -> float:
+    """
+    Map *value* from its natural range [*lo*, *hi*] into [0, 1].
+
+    Formula: ``(value - lo) / (hi - lo)``
+
+    Edge case: if ``lo == hi`` (zero variance), returns 0.0 to avoid
+    division by zero.
+
+    Examples
+    --------
+    >>> min_max_scale(50, 8, 167)   # token_count → 0.264
+    >>> min_max_scale(3,  1, 6)     # bloom_level → 0.400
+    """
+    if hi == lo:
+        return 0.0
+    return clip_to_range((value - lo) / (hi - lo))
+
+
+def log_scale(value: float, lo: float, hi: float) -> float:
+    """
+    Logarithmically compress *value* from [*lo*, *hi*] into [0, 1].
+
+    Useful when the raw distribution is right-skewed (e.g. token counts).
+    Short queries get more resolution; long ones are gently squished.
+
+    Formula: ``(log(v) - log(lo)) / (log(hi) - log(lo))``
+    where *v* is first clipped to [*lo*, *hi*].
+    """
+    value = max(lo, min(hi, float(value)))
+    if lo <= 0:
+        raise ValueError(f"log_scale requires lo > 0, got lo={lo}")
+    return clip_to_range(
+        (math.log(value) - math.log(lo)) / (math.log(hi) - math.log(lo))
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Dependency-tree helpers
+# ─────────────────────────────────────────────────────────────────────────────
+
+def tree_depth(token: spacy.tokens.Token) -> int:
+    """
+    Recursively compute the maximum depth of *token*'s subtree.
+
+    A leaf node (no children) has depth 1.  Every parent node is
+    1 + max(depth of children).
+
+    Deeper values → more embedded clause structure → harder grammar.
+
+    Example tree for "The big dog quickly ran away"::
+
+        ran (root, depth=3)
+        ├── dog (depth=2)
+        │   ├── The  (depth=1)
+        │   └── big  (depth=1)
+        └── away (depth=1)
+    """
+    children = list(token.children)
+    if not children:
+        return 1
+    return 1 + max(tree_depth(child) for child in children)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Band assignment
+# ─────────────────────────────────────────────────────────────────────────────
+
+def assign_band(score: float) -> str:
+    """
+    Map a composite score *C* ∈ [0, 1] to a human-readable complexity tier.
+
+    Thresholds (from ``config.BAND_THRESHOLDS``)::
+
+        [0.00, 0.20) → LOW
+        [0.20, 0.45) → MEDIUM
+        [0.45, 0.60) → HIGH
+        [0.60, 1.00] → VERY HIGH
+    """
+    for upper, label in BAND_THRESHOLDS:
+        if score < upper:
+            return label
+    return BAND_THRESHOLDS[-1][1]
+
+
+
 
 
 # ── Logging ────────────────────────────────────────────────────

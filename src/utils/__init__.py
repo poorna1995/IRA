@@ -8,4 +8,5 @@ from .helpers import (
     spearman_rho,
     auroc_binary,
     summarize_results,
+    clip_to_range, get_doc, min_max_scale
 )
